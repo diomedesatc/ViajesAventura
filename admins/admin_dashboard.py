@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from .destinos.destinos_frame import DestinosFrame
+from .paquetes.paquetes_frame import PaquetesFrame
+from .reservas.reservas_frame import ReservasFrame
 
 
 class AdminDashboard(ttk.Frame):
@@ -19,7 +21,7 @@ class AdminDashboard(ttk.Frame):
 
         self.configurar_estilo()
         self.crear_diseno()
-        self.mostrar_vista("Gestionar Usuarios")  # Muestra la vista de gestión de usuarios como inicio
+        self.mostrar_vista("Gestionar Destinos")  # Muestra la vista de gestión de usuarios como inicio
 
     def configurar_estilo(self):
         """Configura el tema y los estilos personalizados de la aplicación."""
@@ -70,8 +72,8 @@ class AdminDashboard(ttk.Frame):
 
         botones = [
             ("Destinos", "Gestionar Destinos"),
-            ("🏢 Gestión de Departamentos", "Gestionar Departamentos"),
-            ("🚀 Gestión de Proyectos", "Gestionar Proyectos"),
+            ("Paquetes", "Gestionar Paquetes"),
+            ("Reservas", "Gestionar Reservas"),
             ("⏱️ Registro de Tiempo", "Gestionar Tiempos"),
             ("📊 Generación de Informes", "Generar Informes"),
             ("📊 Consultas de indicadores", "Consultar Indicadores")
@@ -101,13 +103,11 @@ class AdminDashboard(ttk.Frame):
         if vista == "Gestionar Destinos":
             self.current_view = DestinosFrame(self.content_frame, self)
 
-        elif vista == "Gestionar Departamentos":
-            pass
-            #self.current_view = GestionDepartamentosFrame(self.content_frame, self)
+        elif vista == "Gestionar Paquetes":
+            self.current_view = PaquetesFrame(self.content_frame, self)
 
-        elif vista == "Gestionar Proyectos":
-            pass
-            #self.current_view = GestionProyectosFrame(self.content_frame, self)
+        elif vista == "Gestionar Reservas":
+            self.current_view = ReservasFrame(self.content_frame, self)
 
         elif vista == "Gestionar Tiempos":
             pass

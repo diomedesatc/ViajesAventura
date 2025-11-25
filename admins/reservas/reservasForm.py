@@ -4,17 +4,17 @@ from cruds.cruds_destinos import buscar_destino
 from clases.Destinos import Destinos
 
 
-class DestinosForm(tk.Toplevel):
+class ReservasForm(tk.Toplevel):
     #Este es el formulario para crear un destino en el sistema!
 
-    def __init__(self, master, callback=None, id_destino = None):
+    def __init__(self, master, callback=None, id_reserva = None):
         super().__init__(master)
         self.entries = None
         self.master = master
         self.callback = callback
-        self.id_destino = id_destino
+        self.id_reserva = id_reserva
 
-        self.title_text = "Actualizar Destino" if id_destino else "Crear Nuevo Destino"
+        self.title_text = "Actualizar Destino" if id_reserva else "Crear Nuevo Destino"
         self.title(self.title_text)
         self.geometry("650x600")
         self.transient(master)

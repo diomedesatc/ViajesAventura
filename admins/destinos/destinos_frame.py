@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from cruds.cruds_destinos import ver_los_destinos
+from cruds.cruds_destinos import ver_los_destinos, eliminar_destino
 from .destinosForm import DestinosForm
 
 
@@ -55,7 +55,7 @@ class DestinosFrame(ttk.Frame):
         ttk.Button(botones_frame, text="✏️ Editar Destino", style='Action.TButton',
                    command=self.abrir_formulario_editar).pack(side='left', padx=5)
         ttk.Button(botones_frame, text="❌ Eliminar Destino", style='Action.TButton',
-                   command=self.eliminar_empleado).pack(side='left', padx=5)
+                   command=self.eliminar_destino).pack(side='left', padx=5)
 
         self.cargar_datos_destinos()
 
@@ -78,23 +78,22 @@ class DestinosFrame(ttk.Frame):
         else:
             messagebox.showwarning("Advertencia", "Selecciona un destino para editar.")
 
-    def eliminar_empleado(self):
-        pass
-        """seleccion = self.destinos_tree.selection()
+    def eliminar_destino(self):
+        seleccion = self.destinos_tree.selection()
         if seleccion:
             id_destino = self.destinos_tree.item(seleccion)['values'][0]
 
             respuesta = messagebox.askyesno("Confirmar Eliminación",
-                                            f"¿Estás seguro de que deseas eliminar al empleado ID {id_empleado}?")
+                                            f"¿Estás seguro de que deseas eliminar al destino ID {id_destino}?")
             if respuesta:
-                eliminar_empleado(id_empleado)
-                messagebox.showinfo("Adios!", "Empleado eliminado correctamente.")
-                self.cargar_datos_empleados()
+                eliminar_destino(id_destino)
+                messagebox.showinfo("Adios!", "Destino eliminado correctamente.")
+                self.cargar_datos_destinos()
 
             else:
-                self.cargar_datos_empleados()
+                self.cargar_datos_destinos()
         else:
-            messagebox.showwarning("Advertencia", "Selecciona un empleado para eliminar.")"""
+            messagebox.showwarning("Advertencia", "Selecciona un destino para eliminar.")
 
 
 

@@ -1,4 +1,4 @@
-from cruds.cruds_destinos import insertar_destino, actualizar_destino
+from cruds.cruds_destinos import insertar_destino, actualizar_destino, buscar_destino
 
 class Destinos:
     def __init__(self, nombre, descripcion, actividades, costo, capacidad):
@@ -14,3 +14,5 @@ class Destinos:
     def actualizar_destino(self, id_destino):
         actualizar_destino(id_destino, self.nombre, self.descripcion, self.actividades, self.costo)
 
+    def buscar_un_destino(self, id_destino):
+        buscar_destino(id_destino)
