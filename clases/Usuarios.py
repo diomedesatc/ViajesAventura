@@ -18,6 +18,16 @@ class Usuarios:
         except Exception as e:
             raise e
 
+    def realizar_reserva(self, id_paquete, fecha_viaje):
+        nueva_reserva = Reserva(
+            fecha=fecha_viaje,
+            id_usuario=self.rut,
+            id_paquete=id_paquete,
+            estado="Confirmada"
+        )
+        nueva_reserva.guardar()
+        return True
+
     def ver_destinos(self):
         ver_los_destinos()
 

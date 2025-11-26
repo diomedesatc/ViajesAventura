@@ -1,131 +1,188 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
+import ttkbootstrap as tb
 from usuarios.formularioRegistroUsuario import UsuarioForm
-from cruds.cruds_usuarios import buscar_usuario, validar_contrasena, hashear_contrasena
-from admins.admin_dashboard import AdminDashboard
+from cruds.cruds_usuarios import buscar_usuario, validar_contrasena
 from usuarios.usuarios_dashboard import UsuarioDashboard
+from admins.admin_dashboard import AdminDashboard
 
-class LoginWindow(tk.Toplevel):
+# --- CONFIGURACIÓN GENERAL ---
+APP_TITLE = "Viajes Aventura - Sistema de Gestión"
+THEME_NAME = "sandstone"  # Opciones: yeti, flatly, sandstone, united
+LOGIN_SIZE = "450x450"
+MAIN_SIZE = "1200x700"
+
+class LoginWindow(tb.Toplevel):
+    """Ventana emergente para el inicio de sesión"""
 
     def __init__(self, master):
         super().__init__(master)
-        self.pass_entry = None
-        self.user_entry = None
         self.master = master
+        self.configurar_ventana()
+        self.inicializar_ui()
+
+    def configurar_ventana(self):
+        """Configuraciones de geometría y título"""
         self.title("Inicio de Sesión")
-        self.geometry("400x250")
+        self.geometry(LOGIN_SIZE)
         self.resizable(False, False)
-        self.id_usuario = None
+        # Si cierran el login, cerramos toda la app
+        self.protocol("WM_DELETE_WINDOW", self.master.on_closing)
 
-        style = ttk.Style()
-        style.configure('TLabel', font=('Helvetica', 10))
-        style.configure('TEntry', font=('Helvetica', 10))
+    def inicializar_ui(self):
+        """Método maestro que orquesta la creación de la interfaz"""
+        self.main_frame = tb.Frame(self, padding=30)
+        self.main_frame.pack(expand=True, fill='both')
 
-        self.crear_widgets()
+        self._crear_encabezado()
+        self._crear_formulario()
+        self._crear_botones()
 
-    def crear_widgets(self):
-        main_frame = ttk.Frame(self, padding="20")
-        main_frame.pack(expand=True, fill='both')
+    # --- SECCIÓN VISUAL (WIDGETS) ---
 
-        # Título
-        lbl_titulo = ttk.Label(main_frame, text="Viajes Aventura - Login", font=("Helvetica", 16, "bold"),
-                               foreground='#48BB78')
-        lbl_titulo.grid(row=0, column=0, columnspan=2, pady=15)
+    def _crear_encabezado(self):
+        lbl_titulo = tb.Label(
+            self.main_frame, 
+            text="Viajes Aventura", 
+            font=("Helvetica", 22, "bold"), 
+            bootstyle="primary"
+        )
+        lbl_titulo.pack(pady=(10, 30))
 
-        # Usuario
-        ttk.Label(main_frame, text="Correo:").grid(row=1, column=0, sticky="w", pady=5, padx=5)
-        self.user_entry = ttk.Entry(main_frame, width=35)
-        self.user_entry.grid(row=1, column=1, pady=5)
+    def _crear_formulario(self):
+        # Campo Correo
+        tb.Label(self.main_frame, text="Correo Electrónico:", font=("Helvetica", 10)).pack(fill='x', pady=5)
+        self.user_entry = tb.Entry(self.main_frame)
+        self.user_entry.pack(fill='x', pady=5)
+        self.user_entry.focus() # Poner el cursor aquí automáticamente
 
-        # Contraseña
-        ttk.Label(main_frame, text="Contraseña:").grid(row=2, column=0, sticky="w", pady=5, padx=5)
-        self.pass_entry = ttk.Entry(main_frame, width=35, show="*")
-        self.pass_entry.grid(row=2, column=1, pady=5)
+        # Campo Contraseña
+        tb.Label(self.main_frame, text="Contraseña:", font=("Helvetica", 10)).pack(fill='x', pady=5)
+        self.pass_entry = tb.Entry(self.main_frame, show="*")
+        self.pass_entry.pack(fill='x', pady=5)
 
-        # Botón de Login
-        btn_login = ttk.Button(main_frame, text="Iniciar Sesión", command=self.handle_login,
-                               style='Accent.TButton')  # Estilo de botón principal
-        btn_login.grid(row=3, column=1, pady=20)
+        # Permitir login presionando la tecla Enter
+        self.pass_entry.bind('<Return>', lambda event: self.accion_login())
 
-        btn_login = ttk.Button(main_frame, text="Registrarse", command=self.handle_register,
-                               style='Accent.TButton')  # E
-        # stilo de botón principal
-        btn_login.grid(row=3, column=2, pady=20)
+    def _crear_botones(self):
+        btn_frame = tb.Frame(self.main_frame)
+        btn_frame.pack(pady=30, fill='x')
 
-        # Configuraciones para centrar
-        main_frame.columnconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
+        btn_login = tb.Button(
+            btn_frame, 
+            text="Iniciar Sesión", 
+            bootstyle="success", 
+            command=self.accion_login, 
+            width=15
+        )
+        btn_login.pack(side="left", padx=5, expand=True)
 
-        # Añadir un tema para el botón principal
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure('Accent.TButton', background='#48BB78', foreground='white', font=('Helvetica', 10, 'bold'))
-        style.map('Accent.TButton', background=[('active', '#38A169')])
+        btn_registro = tb.Button(
+            btn_frame, 
+            text="Crear Cuenta", 
+            bootstyle="outline-primary", 
+            command=self.accion_registro, 
+            width=15
+        )
+        btn_registro.pack(side="right", padx=5, expand=True)
 
-    def  handle_login(self):
-        correo = self.user_entry.get()
-        password = self.pass_entry.get()
+    # --- LÓGICA DE NEGOCIO ---
+
+    def accion_login(self):
+        correo = self.user_entry.get().strip()
+        password = self.pass_entry.get().strip()
+
+        if not correo or not password:
+            messagebox.showwarning("Atención", "Por favor ingresa ambos campos.")
+            return
 
         try:
-            usuario = buscar_usuario(correo)
-            if usuario == None:
-                messagebox.showerror("Error de usuario", "El correo ingresado no es valido.")
-                return
-            else:
-                contrasena_almacenada = usuario[6]
+            usuario = buscar_usuario(correo) # Retorna tupla o None
 
-                respuesta = validar_contrasena(password, contrasena_almacenada)
-                rol = usuario[8]
-                if respuesta:
-                    messagebox.showinfo("Exito", f"Bienvenido {usuario[1]}")
-                    self.destroy()
-                    self.master.mostrar_ventana_principal(rol, usuario[1], usuario[0])
-                else:
-                    messagebox.showinfo("Error", "Contraseña incorrecta.")
+            if usuario is None:
+                messagebox.showerror("Error", "El correo no está registrado.")
+                return
+
+            #Indices en BD
+            # 0:id, 1:nombre, 2:apellido, 3:direc, 4:tel, 5:mail, 6:pass_hash, 7:rut, 8:rol
+            contrasena_almacenada = usuario[6]
+            rol_usuario = usuario[8]
+
+            if validar_contrasena(password, contrasena_almacenada):
+                datos_usuario = {
+                    'id_usuario': usuario[0],
+                    'nombre': usuario[1],
+                    'apellido': usuario[2],
+                    'direccion': usuario[3],
+                    'telefono': usuario[4],
+                    'correo': usuario[5],
+                    'rut': usuario[7],
+                    'rol': rol_usuario
+                }
+                
+                self.destroy()
+                self.master.mostrar_ventana_principal(datos_usuario)
+            else:
+                messagebox.showerror("Error", "Contraseña incorrecta.")
 
         except Exception as e:
-            messagebox.showerror("Error de usuario", "El correo ingresado no es valido.")
+            print(f"Error en login: {e}")
+            messagebox.showerror("Error del Sistema", f"Ocurrió un error inesperado: {e}")
 
-    def handle_register(self):
-        #Formulario para registrarse en el sistema
+    def accion_registro(self):
         UsuarioForm(self)
 
 
-
-class AppGestionEmpresarial(tk.Tk):
-
+# =============================
+# CLASE PRINCIPAL (CONTROLADOR)
+# =============================
+class AppGestionEmpresarial(tb.Window):
+    
     def __init__(self):
-        super().__init__()
-        self.title("Viajes Aventura")
-        self.geometry("1200x700")
-
-        self.withdraw()  # Oculta la ventana principal hasta que el login sea exitoso
+        super().__init__(themename=THEME_NAME)
+        self.configurar_app()
         self.current_window = None
+        
+        # Iniciar flujo mostrando el Login
+        self.mostrar_login()
 
-        # Iniciar el flujo con la ventana de Login
+    def configurar_app(self):
+        self.title(APP_TITLE)
+        self.geometry(MAIN_SIZE)
+        self.withdraw() # Ocultar ventana raíz al inicio
+
+    def mostrar_login(self):
         self.login_window = LoginWindow(self)
 
-    def mostrar_ventana_principal(self, rol: str, nombre: str, id_usuario: int):
-        self.deiconify()
-
+    def mostrar_ventana_principal(self, datos_usuario):
+        """Router: Decide qué Dashboard mostrar según el rol"""
+        self.deiconify() # Mostrar ventana raíz
+        
+        # Limpiar ventana anterior si existe
         if self.current_window:
             self.current_window.destroy()
 
-        if rol == "admin" or rol == "superadmin":
-            self.title(f"Viajes Aventura - ({nombre})")
-            self.current_window = AdminDashboard(self, empleado_id= id_usuario )
-        elif rol == "usuario":
-            # Vista de Empleado (pendiente de desarrollo)
-            self.current_window = UsuarioDashboard(self, empleado_id=id_usuario)
-            self.title(f"Viajes Aventura - ({nombre})")
+        rol = datos_usuario.get('rol')
+        nombre = datos_usuario.get('nombre')
+
+        # Lógica de enrutamiento
+        if rol in ["admin", "superadmin"]:
+            self.current_window = AdminDashboard(self, empleado_id=datos_usuario['id_usuario'])
+        
+        elif rol in ["usuario", "cliente"]:
+            self.current_window = UsuarioDashboard(self, usuario_data=datos_usuario)
+        
+        else:
+            messagebox.showerror("Acceso Denegado", "Tu rol no tiene permisos para acceder.")
+            self.destroy()
+            return
+
+        self.title(f"{APP_TITLE} - {nombre}")
 
     def on_closing(self):
         self.destroy()
-
-
 
 if __name__ == "__main__":
     app = AppGestionEmpresarial()
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
-
