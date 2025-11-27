@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-11-2025 a las 16:22:41
+-- Tiempo de generación: 25-11-2025 a las 19:27:18
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -49,6 +49,66 @@ INSERT INTO `destinos` (`id`, `nombre`, `descripcion`, `actividades`, `costo`) V
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `paquetes`
+--
+
+CREATE TABLE `paquetes` (
+  `id` int(10) NOT NULL,
+  `nombre` varchar(250) NOT NULL,
+  `fecha_inicio` date NOT NULL,
+  `fecha_fin` date NOT NULL,
+  `precio` float NOT NULL,
+  `cupos_disponibles` smallint(6) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `paquetes`
+--
+
+INSERT INTO `paquetes` (`id`, `nombre`, `fecha_inicio`, `fecha_fin`, `precio`, `cupos_disponibles`) VALUES
+(1, 'Sur y Norte de Chile', '2025-11-24', '2025-11-28', 800000, 10),
+(2, 'Norte con Aventuras', '2025-11-27', '2025-12-01', 400000, 20);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `paquete_destinos`
+--
+
+CREATE TABLE `paquete_destinos` (
+  `id` int(11) NOT NULL,
+  `id_paquete` int(11) DEFAULT NULL,
+  `id_destino` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `paquete_destinos`
+--
+
+INSERT INTO `paquete_destinos` (`id`, `id_paquete`, `id_destino`) VALUES
+(3, 2, 1),
+(4, 2, 4),
+(5, 1, 5),
+(6, 1, 3),
+(7, 1, 4);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `reservas`
+--
+
+CREATE TABLE `reservas` (
+  `id` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_paquete` int(11) NOT NULL,
+  `estado` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `usuarios`
 --
 
@@ -84,6 +144,26 @@ ALTER TABLE `destinos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `paquetes`
+--
+ALTER TABLE `paquetes`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `paquete_destinos`
+--
+ALTER TABLE `paquete_destinos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_paquete` (`id_paquete`),
+  ADD KEY `id_destino` (`id_destino`);
+
+--
+-- Indices de la tabla `reservas`
+--
+ALTER TABLE `reservas`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indices de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
@@ -101,10 +181,39 @@ ALTER TABLE `destinos`
   MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
+-- AUTO_INCREMENT de la tabla `paquetes`
+--
+ALTER TABLE `paquetes`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `paquete_destinos`
+--
+ALTER TABLE `paquete_destinos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `reservas`
+--
+ALTER TABLE `reservas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `paquete_destinos`
+--
+ALTER TABLE `paquete_destinos`
+  ADD CONSTRAINT `paquete_destinos_ibfk_1` FOREIGN KEY (`id_paquete`) REFERENCES `paquetes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `paquete_destinos_ibfk_2` FOREIGN KEY (`id_destino`) REFERENCES `destinos` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -103,31 +103,3 @@ class UsuarioForm(tk.Toplevel):
 
         if self.callback:
             self.callback()  # Refresca el listado en el Dashboard
-
-        #self.destroy()
-
-    def actualizar_empleado(self):
-        """data = {key: entry.get() for key, entry in self.entries.items()}
-        departamento = self.depto_var.get()
-        departamento_limpio = departamento.strip("{}")
-        id_departamento = buscar_departamento_por_nombre(departamento_limpio)
-
-        # Requisito: Validación de Entradas Seguras
-        if not all([data['nombre'], data['email'], data['salario']]):
-            messagebox.showerror("Error de Validación",
-                                 "Los campos Nombre, Email y Salario son obligatorios.")
-            return
-
-        editar_empleado(data['nombre'], data['direccion'],data['telefono'],data['email'], float(data['salario']), id_departamento[0], self.empleado_id)
-        messagebox.showinfo("Listo", "Empleado actualizado correctamente!")
-
-        if self.callback:
-            self.callback()  # Refresca el listado en el Dashboard
-
-        self.destroy()
-    def guardar_editar_empleado(self):
-
-        if self.empleado_id:
-            self.actualizar_empleado()
-        else:
-            self.guardar_empleado()"""
