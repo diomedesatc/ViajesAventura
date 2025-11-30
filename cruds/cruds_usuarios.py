@@ -35,3 +35,22 @@ def buscar_usuario(correo):
     except Exception as e:
         conexion.conexion.rollback()
         raise e
+
+def mostrar_nombres_usuario():
+    try:
+        sql = "SELECT nombre FROM usuarios"
+        conexion.cursor.execute(sql)
+        resultado = conexion.cursor.fetchall()
+        return resultado
+    except Exception as e:
+        raise e
+
+def buscar_usuario_por_nombre(nombre):
+    try:
+        sql = "SELECT * FROM usuarios WHERE nombre = %s"
+        datos = (nombre,)
+        conexion.cursor.execute(sql, datos)
+        resultado = conexion.cursor.fetchone()
+        return resultado[0]
+    except Exception as e:
+        raise e

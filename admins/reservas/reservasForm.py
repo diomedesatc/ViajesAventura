@@ -1,139 +1,146 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-from cruds.cruds_destinos import buscar_destino
-from clases.Destinos import Destinos
+from tkinter import messagebox
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from clases.Reservas import Reserva
+from cruds.cruds_paquetes import buscar_paquete, ver_nombre_paquetes, buscar_paquete_por_nombre
+from cruds.cruds_reservas import obtener_informacion_reserva
+from cruds.cruds_usuarios import mostrar_nombres_usuario, buscar_usuario_por_nombre
 
 
-class ReservasForm(tk.Toplevel):
-    #Este es el formulario para crear un destino en el sistema!
+# Asegúrate de importar tus controladores de Reservas, no de Destinos
+# from cruds.cruds_reservas import crear_reserva, actualizar_reserva, buscar_reserva
+# from clases.Reservas import Reservas
 
-    def __init__(self, master, callback=None, id_reserva = None):
+class ReservasForm(tb.Toplevel):
+    def __init__(self, master, callback=None, id_reserva=None):
         super().__init__(master)
-        self.entries = None
         self.master = master
         self.callback = callback
         self.id_reserva = id_reserva
 
-        self.title_text = "Actualizar Destino" if id_reserva else "Crear Nuevo Destino"
+        # Título dinámico
+        self.title_text = "Actualizar Reserva" if id_reserva else "Nueva Reserva"
         self.title(self.title_text)
-        self.geometry("650x600")
-        self.transient(master)
-        self.grab_set()
+        self.geometry("500x550")  # Ajusté un poco el tamaño
         self.resizable(False, False)
 
-        # Estilo para la ventana Toplevel
-        style = ttk.Style()
-        style.configure('TLabel', font=('Helvetica', 10))
-        style.configure('TEntry', font=('Helvetica', 10))
-        style.configure('TButton', font=('Helvetica', 10, 'bold'))
-        style.configure('Accent.TButton', background='#48BB78', foreground='white')
-        style.map('Accent.TButton', background=[('active', '#38A169')])
+        # Modalidad (bloquea la ventana de atrás)
+        self.transient(master)
+        self.grab_set()
+
+        # Diccionario para guardar referencias a los inputs
+        self.inputs = {}
 
         self.crear_widgets()
 
-        if self.id_destino is not None:
-            self.cargar_datos_simulados(self.id_destino)
+        # Si estamos editando, cargamos datos
+        if self.id_reserva is not None:
+            self.cargar_datos_reserva(self.id_reserva)
 
     def crear_widgets(self):
-        main_frame = ttk.Frame(self, padding="30")  # Más padding
+        main_frame = tb.Frame(self, padding="30")
         main_frame.pack(fill='both', expand=True)
 
-        ttk.Label(main_frame, text=self.title_text, font=("Helvetica", 16, "bold"),
-                  foreground='#2D3748').grid(row=0, column=0, columnspan=2, pady=(0, 25), sticky="w")
+        # Título
+        tb.Label(main_frame, text=self.title_text, font=("Helvetica", 16, "bold"),
+                 bootstyle="primary").pack(pady=(0, 25), anchor="w")
 
-        # Configuración de la cuadrícula
-        main_frame.grid_columnconfigure(0, weight=0)  # Etiqueta fija
-        main_frame.grid_columnconfigure(1, weight=1)  # Entrada expandible
+        # --- CAMPO 1: FECHA (Usando DateEntry de ttkbootstrap) ---
+        tb.Label(main_frame, text="Fecha de Reserva:", bootstyle="secondary").pack(anchor="w", pady=(5, 0))
+        self.inputs['fecha'] = tb.DateEntry(main_frame, bootstyle="primary", firstweekday=0, dateformat="%y-%m-%d")
+        self.inputs['fecha'].pack(fill='x', pady=(0, 15))
 
+        # --- CAMPO 2: USUARIO/CLIENTE ---
+        tb.Label(main_frame, text="ID Cliente / Usuario:", bootstyle="secondary").pack(anchor="w", pady=(5, 0))
+        nombres = mostrar_nombres_usuario()
+        self.inputs['usuario'] = tb.Combobox(main_frame, values=nombres, state="readonly")
+        self.inputs['usuario'].current(0)
+        self.inputs['usuario'].pack(fill='x', pady=(0, 15))
 
-        # Campos de texto y entrada
-        campos = [
-            ("Nombre:", "nombre"),
-            ("Descripcion:", "descripcion"),
-            ("Actividades:", "actividades"),
-            ("Costo:", "costo")
-            ]
+        # --- CAMPO 3: PAQUETE ---
+        tb.Label(main_frame, text="Paquete:", bootstyle="secondary").pack(anchor="w", pady=(5, 0))
+        paquetes = ver_nombre_paquetes()
+        paquetes_limpio =[p[0] for p in paquetes]
+        self.inputs['paquete'] = tb.Combobox(main_frame, values=paquetes_limpio, state="readonly")
+        self.inputs['paquete'].current(0)
+        self.inputs['paquete'].pack(fill='x', pady=(0, 15))
 
-        self.entries = {}
-        row_num = 1
-        for label_text, key in campos:
+        # --- CAMPO 4: ESTADO (Usando Combobox) ---
+        tb.Label(main_frame, text="Estado:", bootstyle="secondary").pack(anchor="w", pady=(5, 0))
+        estados = ["Pendiente", "Confirmada", "Cancelada", "Completada"]
+        self.inputs['estado'] = tb.Combobox(main_frame, values=estados, state="readonly")
+        self.inputs['estado'].current(0)  # Seleccionar 'Pendiente' por defecto
+        self.inputs['estado'].pack(fill='x', pady=(0, 15))
 
-            ttk.Label(main_frame, text=label_text, width=30).grid(row=row_num, column=0, sticky="w", pady=7)  # Más pady
+        # --- BOTÓN DE ACCIÓN ---
+        texto_boton = "Guardar Reserva" if self.id_reserva is None else "Actualizar Reserva"
 
-            entry = ttk.Entry(main_frame, width=50)  # Mayor ancho
-            entry.grid(row=row_num, column=1, sticky="ew", pady=7)
-            self.entries[key] = entry
+        btn_guardar = tb.Button(
+            main_frame,
+            text=texto_boton,
+            bootstyle="success",  # Color verde automático
+            command=self.guardar_actualizar_reserva
+        )
+        btn_guardar.pack(fill='x', pady=30)
 
+    def guardar_actualizar_reserva(self):
+        # Recolección de datos
+        # Nota: DateEntry devuelve la fecha con .entry.get()
+        data = {
+            "fecha": self.inputs['fecha'].entry.get(),
+            "usuario": self.inputs['usuario'].get(),
+            "paquete": self.inputs['paquete'].get(),
+            "estado": self.inputs['estado'].get()
+        }
 
-
-            row_num += 1
-        texto_boton = "Agregar Destino" if self.id_destino is None else "Actualizar destino"
-        btn_guardar = ttk.Button(main_frame, text= texto_boton,
-                                 command=self.guardar_actualizar_destino, style='Accent.TButton')
-        btn_guardar.grid(row=row_num, column=0, columnspan=2, pady=30, sticky="n")
-
-    def crear_destino(self):
-        #Validar y crear usuario
-        data = {key: entry.get() for key, entry in self.entries.items()}
-
+        # Validación básica
+        if not all(data.values()):
+            messagebox.showerror("Error", "Todos los campos son obligatorios")
+            return
 
         try:
-            # Requisito: Validación de Entradas Seguras
-            if not all([data['nombre'], data['actividades'], data['costo']]):
-                messagebox.showerror("Error de Validación",
-                                     "Los campos Nombre, Actividades y Costo son obligatorios.")
-                return
+            if self.id_reserva is None:
+                id_usuario = buscar_usuario_por_nombre(data['usuario'])
+                id_paquete = buscar_paquete_por_nombre(data['paquete'])
+                nueva_reserva = Reserva(data['fecha'], id_usuario, id_paquete, data['estado'])
+                nueva_reserva.guardar()
+                messagebox.showinfo("Éxito", "Reserva creada correctamente.")
+            else:
+                # Lógica de ACTUALIZAR
+                id_usuario = buscar_usuario_por_nombre(data['usuario'])
+                id_paquete = buscar_paquete_por_nombre(data['paquete'])
+                print(data['fecha'], id_usuario, id_paquete, data['estado'])
+                reserva_actualizada = Reserva(data['fecha'], id_usuario, id_paquete, data['estado'])
+                reserva_actualizada.actualizar(self.id_reserva)
+                messagebox.showinfo("Éxito", "Reserva actualizada correctamente.")
 
-            nuevo_destino = Destinos(data['nombre'], data['descripcion'], data['actividades'], data['costo'], 25)
-            nuevo_destino.insertar_destino()
-            messagebox.showinfo("Correcto!", "Destino registrado correctamente.")
             if self.callback:
-                self.callback()  # Refresca el listado en el Dashboard
+                self.callback()
 
             self.destroy()
 
-
         except Exception as e:
-            messagebox.showerror("Error", f"Error: {e}")
+            messagebox.showerror("Error", f"Ocurrió un error: {e}")
 
+    def cargar_datos_reserva(self, id_reserva):
+        # Aquí deberías llamar a tu función real: buscar_reserva(id_reserva)
+        # Simulamos datos para el ejemplo visual:
+        reserva = obtener_informacion_reserva(self.id_reserva)
+        """datos_simulados = {
+            "fecha": reserva[1],
+            "paquete": "Cancún Todo Incluido",
+            "estado": "Confirmada"
+        }
 
-    def actualizar_destino(self):
+        # Cargar datos en los widgets
+        self.inputs['fecha'].entry.delete(0, tk.END)
+        self.inputs['fecha'].entry.insert(0, datos_simulados['fecha'])
 
-        data = {key: entry.get() for key, entry in self.entries.items()}
+        self.inputs['usuario'].delete(0, tk.END)
+        self.inputs['usuario'].insert(0, datos_simulados['usuario'])
 
-        # Requisito: Validación de Entradas Seguras
-        if not all([data['nombre'], data['actividades'], data['costo']]):
-            messagebox.showerror("Error de Validación",
-                                 "Los campos Nombre, actividades y costo son obligatorios.")
-            return
+        self.inputs['paquete'].delete(0, tk.END)
+        self.inputs['paquete'].insert(0, datos_simulados['paquete'])
 
-        destino_editar = Destinos(data['nombre'],data['descripcion'], data['actividades'], data['costo'], 25)
-        destino_editar.actualizar_destino(self.id_destino)
-        messagebox.showinfo("Correcto!", "Destino actualizado correctamente.")
-
-        if self.callback:
-            self.callback()  # Refresca el listado en el Dashboard
-
-        self.destroy()
-
-    def guardar_actualizar_destino(self):
-        if self.id_destino is None:
-            self.crear_destino()
-        else:
-            self.actualizar_destino()
-
-    def cargar_datos_simulados(self, id_destino: int):
-        destino = buscar_destino(id_destino)
-        if destino:
-            datos_destino = {
-                "nombre": destino[1],
-                "descripcion": destino[2],
-                "actividades": destino[3],
-                "costo": destino[4]
-            }
-
-            for key, value in datos_destino.items():
-                if key in self.entries:
-                    self.entries[key].delete(0, tk.END)
-                    self.entries[key].insert(0, value)
-
+        self.inputs['estado'].set(datos_simulados['estado'])"""

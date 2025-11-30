@@ -15,7 +15,9 @@ def insertar_reserva(fecha, id_usuario, id_paquete, estado):
 
 def ver_reservas():
     try:
-        sql = 'SELECT * FROM reservas'
+        sql = ('SELECT r.id, r.fecha, u.nombre, p.nombre, r.estado FROM reservas as r '
+               'INNER JOIN usuarios as u ON r.id_usuario = u.id '
+               'INNER JOIN paquetes as p ON r.id_paquete = p.id ')
         conexion.cursor.execute(sql)
         resultado = conexion.cursor.fetchall()
         return resultado
@@ -71,6 +73,17 @@ def obtener_reservas_por_usuario(id_usuario):
             WHERE r.id_usuario = %s
         """
         datos = (id_usuario,)
+        conexion.cursor.execute(sql, datos)
+        resultado = conexion.cursor.fetchall()
+        return resultado
+    except Exception as e:
+        raise e
+
+
+def obtener_informacion_reserva(id_reserva):
+    try:
+        sql = 'SELECT * FROM reservas WHERE id = %s'
+        datos = (id_reserva,)
         conexion.cursor.execute(sql, datos)
         resultado = conexion.cursor.fetchall()
         return resultado

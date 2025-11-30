@@ -1,120 +1,130 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from tkinter import messagebox
 from cruds.cruds_destinos import buscar_destino
 from clases.Destinos import Destinos
 
 
-class DestinosForm(tk.Toplevel):
-    #Este es el formulario para crear un destino en el sistema!
+class DestinosForm(tb.Toplevel):
+    """
+    Formulario modal para Crear o Actualizar un destino usando ttkbootstrap.
+    """
 
-    def __init__(self, master, callback=None, id_destino = None):
+    def __init__(self, master, callback=None, id_destino=None):
         super().__init__(master)
         self.entries = None
-        self.master = master
         self.callback = callback
         self.id_destino = id_destino
 
+        # Título y Configuración de Ventana
         self.title_text = "Actualizar Destino" if id_destino else "Crear Nuevo Destino"
         self.title(self.title_text)
-        self.geometry("650x600")
+        self.geometry("600x550")
+
+        # Comportamiento Modal (Bloquea la ventana padre)
         self.transient(master)
         self.grab_set()
         self.resizable(False, False)
 
-        # Estilo para la ventana Toplevel
-        style = ttk.Style()
-        style.configure('TLabel', font=('Helvetica', 10))
-        style.configure('TEntry', font=('Helvetica', 10))
-        style.configure('TButton', font=('Helvetica', 10, 'bold'))
-        style.configure('Accent.TButton', background='#48BB78', foreground='white')
-        style.map('Accent.TButton', background=[('active', '#38A169')])
-
+        # Iniciar interfaz
         self.crear_widgets()
 
+        # Cargar datos si es edición
         if self.id_destino is not None:
             self.cargar_datos_simulados(self.id_destino)
 
     def crear_widgets(self):
-        main_frame = ttk.Frame(self, padding="30")  # Más padding
-        main_frame.pack(fill='both', expand=True)
+        # Frame principal con padding
+        main_frame = tb.Frame(self, padding=30)
+        main_frame.pack(fill=BOTH, expand=True)
 
-        ttk.Label(main_frame, text=self.title_text, font=("Helvetica", 16, "bold"),
-                  foreground='#2D3748').grid(row=0, column=0, columnspan=2, pady=(0, 25), sticky="w")
+        # Título del Formulario
+        lbl_titulo = tb.Label(
+            main_frame,
+            text=self.title_text,
+            font=("Helvetica", 18, "bold"),
+            bootstyle="primary"
+        )
+        lbl_titulo.grid(row=0, column=0, columnspan=2, pady=(0, 30), sticky="w")
 
         # Configuración de la cuadrícula
-        main_frame.grid_columnconfigure(0, weight=0)  # Etiqueta fija
-        main_frame.grid_columnconfigure(1, weight=1)  # Entrada expandible
+        main_frame.columnconfigure(1, weight=1)  # La columna 1 (inputs) se expande
 
-
-        # Campos de texto y entrada
+        # Campos del formulario
         campos = [
             ("Nombre:", "nombre"),
-            ("Descripcion:", "descripcion"),
+            ("Descripción:", "descripcion"),
             ("Actividades:", "actividades"),
             ("Costo:", "costo")
-            ]
+        ]
 
         self.entries = {}
-        row_num = 1
-        for label_text, key in campos:
 
-            ttk.Label(main_frame, text=label_text, width=30).grid(row=row_num, column=0, sticky="w", pady=7)  # Más pady
+        for i, (label_text, key) in enumerate(campos, start=1):
+            # Etiqueta
+            tb.Label(main_frame, text=label_text, font=("Helvetica", 10)).grid(row=i, column=0, sticky="w", pady=10)
 
-            entry = ttk.Entry(main_frame, width=50)  # Mayor ancho
-            entry.grid(row=row_num, column=1, sticky="ew", pady=7)
+            # Campo de entrada (Entry)
+            entry = tb.Entry(main_frame, bootstyle="primary")
+            entry.grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=10)
+
             self.entries[key] = entry
 
+        # Botón de Acción
+        texto_boton = "💾 Guardar Cambios" if self.id_destino else "➕ Agregar Destino"
 
-
-            row_num += 1
-        texto_boton = "Agregar Destino" if self.id_destino is None else "Actualizar destino"
-        btn_guardar = ttk.Button(main_frame, text= texto_boton,
-                                 command=self.guardar_actualizar_destino, style='Accent.TButton')
-        btn_guardar.grid(row=row_num, column=0, columnspan=2, pady=30, sticky="n")
+        btn_guardar = tb.Button(
+            main_frame,
+            text=texto_boton,
+            bootstyle="success",  # Color verde estilo bootstrap
+            width=20,
+            command=self.guardar_actualizar_destino
+        )
+        btn_guardar.grid(row=len(campos) + 1, column=0, columnspan=2, pady=40)
 
     def crear_destino(self):
-        #Validar y crear usuario
+        # Recolectar datos
         data = {key: entry.get() for key, entry in self.entries.items()}
 
-
         try:
-            # Requisito: Validación de Entradas Seguras
+            # Validación simple
             if not all([data['nombre'], data['actividades'], data['costo']]):
-                messagebox.showerror("Error de Validación",
-                                     "Los campos Nombre, Actividades y Costo son obligatorios.")
+                messagebox.showerror("Error de Validación", "Los campos Nombre, Actividades y Costo son obligatorios.")
                 return
 
+            # Crear instancia (Nota: el 25 es un valor hardcodeado que tenías originalmente, asumo que es cupos o stock)
             nuevo_destino = Destinos(data['nombre'], data['descripcion'], data['actividades'], data['costo'], 25)
             nuevo_destino.insertar_destino()
-            messagebox.showinfo("Correcto!", "Destino registrado correctamente.")
+
+            messagebox.showinfo("¡Éxito!", "Destino registrado correctamente.")
+
             if self.callback:
-                self.callback()  # Refresca el listado en el Dashboard
+                self.callback()  # Refresca la tabla en el dashboard
 
             self.destroy()
 
-
         except Exception as e:
-            messagebox.showerror("Error", f"Error: {e}")
-
+            messagebox.showerror("Error", f"Ocurrió un error al crear: {e}")
 
     def actualizar_destino(self):
-
         data = {key: entry.get() for key, entry in self.entries.items()}
 
-        # Requisito: Validación de Entradas Seguras
         if not all([data['nombre'], data['actividades'], data['costo']]):
-            messagebox.showerror("Error de Validación",
-                                 "Los campos Nombre, actividades y costo son obligatorios.")
+            messagebox.showerror("Error de Validación", "Los campos Nombre, Actividades y Costo son obligatorios.")
             return
 
-        destino_editar = Destinos(data['nombre'],data['descripcion'], data['actividades'], data['costo'], 25)
-        destino_editar.actualizar_destino(self.id_destino)
-        messagebox.showinfo("Correcto!", "Destino actualizado correctamente.")
+        try:
+            destino_editar = Destinos(data['nombre'], data['descripcion'], data['actividades'], data['costo'], 25)
+            destino_editar.actualizar_destino(self.id_destino)
 
-        if self.callback:
-            self.callback()  # Refresca el listado en el Dashboard
+            messagebox.showinfo("¡Éxito!", "Destino actualizado correctamente.")
 
-        self.destroy()
+            if self.callback:
+                self.callback()
+
+            self.destroy()
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error al actualizar: {e}")
 
     def guardar_actualizar_destino(self):
         if self.id_destino is None:
@@ -125,6 +135,7 @@ class DestinosForm(tk.Toplevel):
     def cargar_datos_simulados(self, id_destino: int):
         destino = buscar_destino(id_destino)
         if destino:
+            # Mapeo según el orden de columnas de tu base de datos
             datos_destino = {
                 "nombre": destino[1],
                 "descripcion": destino[2],
@@ -134,6 +145,5 @@ class DestinosForm(tk.Toplevel):
 
             for key, value in datos_destino.items():
                 if key in self.entries:
-                    self.entries[key].delete(0, tk.END)
+                    self.entries[key].delete(0, END)  # END viene de constants
                     self.entries[key].insert(0, value)
-

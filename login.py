@@ -4,7 +4,7 @@ import ttkbootstrap as tb
 from usuarios.formularioRegistroUsuario import UsuarioForm
 from cruds.cruds_usuarios import buscar_usuario, validar_contrasena
 from usuarios.usuarios_dashboard import UsuarioDashboard
-from admins.admin_dashboard import AdminDashboard
+from admins.admin_dashboardtb import AdminDashboard_
 
 # --- CONFIGURACIÓN GENERAL ---
 APP_TITLE = "Viajes Aventura - Sistema de Gestión"
@@ -167,7 +167,7 @@ class AppGestionEmpresarial(tb.Window):
 
         # Lógica de enrutamiento
         if rol in ["admin", "superadmin"]:
-            self.current_window = AdminDashboard(self, empleado_id=datos_usuario['id_usuario'])
+            self.current_window = AdminDashboard_(self, usuario_data=datos_usuario)
         
         elif rol in ["usuario", "cliente"]:
             self.current_window = UsuarioDashboard(self, usuario_data=datos_usuario)

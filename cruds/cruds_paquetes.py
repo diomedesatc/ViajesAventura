@@ -30,6 +30,15 @@ def ver_paquetes():
     except Exception as e:
         raise e
 
+def ver_nombre_paquetes():
+    try:
+        sql = 'SELECT nombre FROM paquetes'
+        conexion.cursor.execute(sql)
+        respuesta = conexion.cursor.fetchall()
+        return respuesta
+    except Exception as e:
+        raise e
+
 def eliminar_paquete(id):
     try:
         sql = 'DELETE FROM paquetes WHERE id=%s'
@@ -54,7 +63,7 @@ def obtener_destinos_de_paquete(id_paquete):
     """Recupera los destinos asociados a un paquete específico"""
     try:
         # Hacemos un JOIN para traer el nombre del destino también
-        sql = ('SELECT d.id, d.nombre '
+        sql = ('SELECT d.id, d.nombre, d.costo '
                'FROM destinos d '
                'INNER JOIN paquete_destinos pd ON d.id = pd.id_destino '
                'WHERE pd.id_paquete = %s')
@@ -88,4 +97,14 @@ def actualizar_paquete_db(id_paquete, nombre, f_inicio, f_fin, precio, cupos, li
     except Exception as e:
         conexion.conexion.rollback()
         print(f"Error al actualizar paquete: {e}")
+        raise e
+
+def buscar_paquete_por_nombre(nombre):
+    try:
+        sql = 'SELECT * FROM paquetes WHERE nombre=%s'
+        datos = (nombre,)
+        conexion.cursor.execute(sql, datos)
+        respuesta = conexion.cursor.fetchone()
+        return respuesta[0]
+    except Exception as e:
         raise e
