@@ -35,10 +35,6 @@ def editar_reserva(id, fecha, id_usuario, id_paquete, estado):
         raise e
     
 def cancelar_reserva(id_reserva):
-    """
-    En lugar de borrar (DELETE), actualizamos el estado a 'Cancelada'.
-    Esto mantiene el historial.
-    """
     try:
         sql = "UPDATE reservas SET estado = 'Cancelada' WHERE id = %s"
         datos = (id_reserva,)
@@ -89,3 +85,27 @@ def obtener_informacion_reserva(id_reserva):
         return resultado
     except Exception as e:
         raise e
+
+
+def confirmar_reserva(id_reserva):
+    print(f"--- INICIANDO PAGO PARA RESERVA ID: {id_reserva} ---")
+
+    try:
+        id_final = id_reserva
+        if isinstance(id_reserva, tuple):
+            id_final = id_reserva[0]
+
+        consulta = f"UPDATE reservas SET estado = 'Confirmada' WHERE id = {id_final}"
+
+        print(f"EJECUTANDO SQL: {consulta}")
+        conexion.cursor.execute(consulta)
+        conexion.conexion.commit()
+
+        return True
+
+    except Exception as e:
+        print(f"ERROR CRÍTICO AL PAGAR: {e}")
+        try:
+            conexion.conexion.rollback()
+        except:
+            pass

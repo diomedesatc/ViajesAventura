@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import ttkbootstrap as tb
 from ttkbootstrap.constants import *
-from cruds.cruds_reservas import obtener_reservas_por_usuario, eliminar_reserva, insertar_reserva, cancelar_reserva
+from cruds.cruds_reservas import obtener_reservas_por_usuario, insertar_reserva, cancelar_reserva, confirmar_reserva
 from cruds.cruds_paquetes import ver_paquetes
 
 class UsuarioDashboard(tb.Frame): 
@@ -56,7 +56,7 @@ class UsuarioDashboard(tb.Frame):
         #Scrollbar (La barra vertical)
         scrollbar = tb.Scrollbar(parent_frame, orient="vertical", command=canvas.yview)
         
-        #Frame interno (Donde pondremos las tarjetas)
+        #Frame interno (Donde van las tarjetas)
         scrollable_frame = tb.Frame(canvas)
 
         #Configura que el frame crezca dentro del canvas
@@ -194,10 +194,10 @@ class UsuarioDashboard(tb.Frame):
         frame_accion = tb.Frame(card)
         frame_accion.pack(fill="x", pady=5)
 
-        tb.Label(frame_accion, text="Confirmar fecha:", font=("Helvetica", 9)).pack(side="left")
+        #tb.Label(frame_accion, text="Confirmar fecha:", font=("Helvetica", 9)).pack(side="left")
         entry_fecha = tb.Entry(frame_accion, width=12)
         entry_fecha.pack(side="left", padx=5)
-        entry_fecha.insert(0, str(f_inicio)) 
+        entry_fecha.insert(0, str(f_inicio))
 
         btn = tb.Button(
             card, 
@@ -290,20 +290,49 @@ class UsuarioDashboard(tb.Frame):
         
         tb.Label(card, text=f" {estado} ", bootstyle=f"{color_estado}-inverse", font=("Helvetica", 9, "bold")).pack(anchor="e", pady=(5, 10))
 
+        #botones de acción
+
         if estado != "Cancelada":
             tb.Separator(card, orient="horizontal").pack(fill="x", pady=5)
             
             btn_frame = tb.Frame(card)
             btn_frame.pack(fill="x", pady=10)
-            
+
+            #boton de pago
+            if estado == "Pendiente":
+                btn_pagar = tb.Button(
+                    btn_frame,
+                    text='Pagar Ahora',
+                    bootstyle="success",
+                    width=15,
+                    command=lambda i=r_id: self.accion_pagar(i)
+                )
+                btn_pagar.pack(side="left", padx=5, expand=True, fill="x")
+
+            #boton cancelar
             btn_cancel = tb.Button(
                 btn_frame, 
                 text="Cancelar Viaje", 
-                bootstyle="danger", 
-                width=20, 
+                bootstyle="danger-outline",
+                width=15,
                 command=lambda i=r_id: self.accion_cancelar(i) 
             )
-            btn_cancel.pack()
+            btn_cancel.pack(side="right", padx=5, expand=True, fill="x")
+
+    def accion_pagar(self, id_reserva):
+        #simula el pago
+        titulo = "Confirmar Pago"
+        mensaje = f"¿Estas seguro de realizar el pago para la reserva #{id_reserva}?"
+        respuesta = messagebox.askyesno(titulo, mensaje)
+
+        if respuesta:
+            #acá se conectaria algun servicio para procesar el pago
+            #en este caso, llamamos al CRUD para cambiar el estado de la reserva.
+            if confirmar_reserva(id_reserva):
+                messagebox.showinfo("¡Pago Exisoto!", "Tu viaje ha sido confirmado.")
+                self.cargar_mis_reservas_visual()
+            else:
+                messagebox.showerror("Error", "No se pudo procesar el pago")
 
     def accion_cancelar(self, id_reserva):
         if messagebox.askyesno("Confirmar Cancelación", f"¿Estás seguro de que deseas cancelar la reserva #{id_reserva}?"):
